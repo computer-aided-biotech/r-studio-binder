@@ -1,0 +1,36 @@
+---
+title: "multi-objective-optimality"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(ggplot2)
+library(plotly)
+df <- read.csv("szekely-2015-data.csv", header = TRUE)
+df_numeric <- df %>%
+  dplyr::select_if(is.numeric) %>%
+  select_if(~ !any(is.na(.)))
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+hull <- chull(df$Adult.weight..g., df$Maximum.longevity..yrs.)
+p1 <- ggplot(df, aes(x=Adult.weight..g., y=Maximum.longevity..yrs., text=Common.name)) +
+        geom_point(data=df[hull, ], aes(x=Adult.weight..g., y=Maximum.longevity..yrs.), colour="red", size=5) + 
+        geom_path(data=df[hull, ]) + 
+        geom_point() +
+        scale_x_log10() +
+        scale_y_log10()
+ggplotly(p1, tooltip="text")
+```
+
+```{r}
+prcom(df_numeric)
+```

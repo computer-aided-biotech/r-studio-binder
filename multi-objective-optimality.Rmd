@@ -9,11 +9,50 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(ggplot2)
+```
+
+
+## Finches
+
+```{r}
+finches <- read.csv("~/Dev/r-studio-binder/data/finches.csv", header=TRUE)
+pca <- princomp(finches, cor=TRUE, scores=TRUE)
+```
+```{r, echo=FALSE}
+plot(pca)
+```
+
+
+```{r, echo=FALSE}
+pca_df <- data.frame(pca$scores)
+plot1 <- ggplot(data=pca_df, aes(x=Comp.1, y=Comp.2)) + geom_point()
+```
+
+```{r}
+hull <- chull(pca_df$Comp.1, pca_df$Comp.2)
+hull
+```
+
+```{r}
+pca_df <- data.frame(pca$scores)
+ggplot(data=pca_df, aes(x=Comp.1, y=Comp.2)) +
+  geom_polygon(data=pca_df[hull, ], fill='white') +
+  geom_point(data=pca_df[hull, ], colour="red", size=5) +
+  geom_point()
+```
+
+## Longevity
+
+```{r, echo=FALSE}
 library(plotly)
-df <- read.csv("szekely-2015-data.csv", header = TRUE)
+library(dplyr)
+```
+
+```{r}
+df <- read.csv("data/szekely-2015-data.csv", header = TRUE)
 df_numeric <- df %>%
   dplyr::select_if(is.numeric) %>%
-  select_if(~ !any(is.na(.)))
+  dplyr::select_if(~ !any(is.na(.)))
 ```
 
 ## Including Plots
@@ -31,6 +70,3 @@ p1 <- ggplot(df, aes(x=Adult.weight..g., y=Maximum.longevity..yrs., text=Common.
 ggplotly(p1, tooltip="text")
 ```
 
-```{r}
-prcom(df_numeric)
-```

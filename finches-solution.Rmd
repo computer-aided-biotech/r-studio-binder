@@ -1,0 +1,117 @@
+---
+title: "Archetype analysis of Darwin's finches"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Useful libraries (optional)
+
+Remove the following two lines if you want to use other tools for plotting. You might have to install ggplot2 and ggfortify using `install.package(ggplot2)` and`install.package(ggfority)`. You can also use something else to plot. In particular, [autoplot](https://cran.r-project.org/web/packages/ggfortify/vignettes/plot_pca.html) (available through ggplot and ggfortify might be useful to look at the PCA results.)
+```{r}
+
+library(ggplot2)
+library(ggfortify)
+```
+
+## Tasks
+
+Follow the following steps to perform an archetype analysis of the finch data.
+
+* Read the data from `data/finches.csv` (`read.csv` should do the trick).
+* Plot the data. Can you already infer archetypes? It is challenging in 5 dimensions, right?
+* Perform a principal component analysis (PCA).
+    * `princomp` is recommended.
+    * If you need a refresher on PCA, check out this interactive explanation: https://setosa.io/ev/principal-component-analysis/.
+* Determine how much of the variance in the data is captured by the individual principal components.
+* Plot the first two principle components. How many archetypes can you identify in the plot?
+* Look at the feature loadings (`pca_result$loadings`). You can also `autoplot` or `biplot` to generate a [biplot](https://en.wikipedia.org/wiki/Biplot) of the components and loadings. What are the contributions of the features to the first two principal components?
+* Compute the convex hull (`chull` is recommended) and highlight it in the PCA plot.
+* Bonus points: based on the points in the convex hull, determine the triangle with the largest surface (spanned by three points in the convex hull).
+
+## Reference solution
+
+### Load the data.
+
+```{r}
+finches <- read.csv("~/Dev/r-studio-binder/data/finches.csv", header=TRUE)
+```
+
+### Plot the data
+
+```{r, echo=FALSE}
+plot(finches)
+```
+
+### PCA
+```{r}
+pca <- princomp(finches, cor=TRUE, scores=TRUE) # cor=TRUE => scale & center
+```
+
+Plot the variance captured by the 5 principle componets.
+```{r, echo=FALSE}
+plot(pca)
+```
+
+
+```{r, echo=FALSE}
+pca_df <- data.frame(pca$scores)
+ggplot(data=pca_df, aes(x=Comp.1, y=Comp.2)) + geom_point()
+```
+```{r}
+pca$loadings
+autoplot(pca, loadings = TRUE, loadings.label = TRUE)
+```
+
+### Compute the convex hull and highlight it in the plot
+
+```{r}
+hull <- chull(pca_df$Comp.1, pca_df$Comp.2)
+hull
+```
+
+```{r}
+pca_df <- data.frame(pca$scores)
+ggplot(data=pca_df, aes(x=Comp.1, y=Comp.2)) +
+  geom_polygon(data=pca_df[hull, ], fill='white') +
+  geom_point(data=pca_df[hull, ], colour="red", size=5) +
+  geom_point()
+```
+
+### Bonus points: in the convex hull, find the three points that span the triangle with the largest area and highlight it in the PCA plot
+
+```{r}
+winner <- 0
+area <- 0
+for (i in hull){
+  for (j in hull){
+    for (k in hull)
+      ax = pca_df$Comp.1[i]
+      ay = pca_df$Comp.2[i]
+      bx = pca_df$Comp.1[j]
+      by = pca_df$Comp.2[j]
+      cx = pca_df$Comp.1[k]
+      cy = pca_df$Comp.2[k]
+      area_new <- abs((ax * (by - cy) + bx * (cy - ay) + cx * (ay + by)) / 2)
+      if (area_new >= area) {
+        print(area_new)
+        area <- area_new
+        winner <- c(i, j, k)
+      }
+  }
+}
+print("The three points in the convex hull that correspond to the triangle with largest area")
+print(winner)
+```
+
+```{r}
+pca_df <- data.frame(pca$scores)
+ggplot(data=pca_df, aes(x=Comp.1, y=Comp.2)) +
+  geom_polygon(data=pca_df[hull, ], fill='white') +
+  geom_point(data=pca_df[hull, ], colour="red", size=5) +
+  geom_path(data=pca_df[append(winner, winner[1]), ], colour="cyan") + 
+  geom_point()
+  
+```

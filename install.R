@@ -1,4 +1,5 @@
 install.packages("ggplot2")
+install.packages("ggfortify")
 install.packages("plotly")
 install.packages("tidyverse")
 install.packages("rmarkdown")
